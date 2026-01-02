@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Cenk Torun Acting Workshop</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #0b0b0b;
+    color: white;
+}
+
+.container {
+    max-width: 430px;
+    margin: auto;
+    padding: 20px;
+    text-align: center;
+}
+
+img {
+    width: 100%;
+    border-radius: 12px;
+    margin-bottom: 20px;
+}
+
+h1 {
+    font-size: 24px;
+}
+
+p {
+    color: #bbb;
+}
+
+.btn {
+    width: 100%;
+    padding: 15px;
+    margin: 10px 0;
+    font-size: 16px;
+    font-weight: bold;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.ticket { background: #00c853; color: black; }
+.donate { background: #ff9100; color: black; }
+.whatsapp { background: #25d366; color: black; }
+
+.box {
+    display: none;
+    background: #1a1a1a;
+    padding: 15px;
+    border-radius: 10px;
+    margin-top: 15px;
+    text-align: left;
+}
+
+label {
+    font-size: 13px;
+    margin-top: 10px;
+    display: block;
+}
+
+input, select {
+    width: 100%;
+    padding: 10px;
+    margin-top: 5px;
+    border-radius: 6px;
+    border: none;
+}
+
+.suggestions button {
+    margin: 5px 5px 0 0;
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+}
+
+.qr {
+    text-align: center;
+}
+
+.qr img {
+    width: 200px;
+    margin: 15px auto;
+}
+
+footer {
+    margin-top: 25px;
+    font-size: 12px;
+    color: #888;
+    text-align: center;
+}
+</style>
+
+<script>
+const EVENT_NAME = "Cenk Torun Acting Workshop";
+const BTC_ADDRESS = "bc1xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"; // 🔴 replace
+const WHATSAPP_NUMBER = "18452225792"; // 🔴 replace
+const TICKET_PRICE_USD = 250;
+
+let paymentType = "";
+let btcRate = 0;
+let confirmationId = "";
+
+async function fetchRate() {
+    const res = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd");
+    const data = await res.json();
+    btcRate = data.bitcoin.usd;
+}
+
+fetchRate();
+
+function startPayment(type) {
+    paymentType = type;
+    confirmationId = "CTW-" + Math.random().toString(36).substring(2, 8).toUpperCase();
+    document.getElementById("btcBox").style.display = "block";
+    document.getElementById("donationBox").style.display = type === "Donation" ? "block" : "none";
+    document.getElementById("ticketBox").style.display = type === "Ticket" ? "block" : "none";
+}
+
+function setDonation(amount) {
+    document.getElementById("usdAmount").value = amount;
+    convertBTC();
+}
+
+function updateTicket() {
+    const qty = document.getElementById("quantity").value;
+    document.getElementById("usdAmount").value = qty * TICKET_PRICE_USD;
+    convertBTC();
+}
+
+function convertBTC() {
+    const usd = document.getElementById("usdAmount").value;
+    if (!usd || !btcRate) return;
+    document.getElementById("btcAmount").value = (usd / btcRate).toFixed(8);
+}
+
+function confirmWhatsApp() {
+    const usd = document.getElementById("usdAmount").value;
+    const btc = document.getElementById("btcAmount").value;
+    const txid = document.getElementById("txid").value;
+
+    if (!usd || !btc || !txid) {
+        alert("Please complete all fields.");
+        return;
+    }
+
+    const date = new Date().toLocaleString();
+
+    const message =
+`Bitcoin Payment Confirmation
+
+Event: ${EVENT_NAME}
+Type: ${paymentType}
+USD Amount: $${usd}
+BTC Amount: ${btc}
+TXID: ${txid}
+Confirmation ID: ${confirmationId}
+Date: ${date}
+
+Please confirm.`;
+
+    window.open(
+        `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`,
+        "_blank"
+    );
+}
+</script>
+
+</head>
+<body>
+
+<div class="container">
+
+<img src="logo.jpg" alt="Cenk Torun Acting Workshop">
+
+<h1>Cenk Torun Acting Workshop</h1>
+<p>Bitcoin payments – Ticket or Donation</p>
+
+<button class="btn ticket" onclick="startPayment('Ticket')">🎟 Ticket</button>
+<button class="btn donate" onclick="startPayment('Donation')">❤️ Donation</button>
+
+<div class="box" id="btcBox">
+
+<strong>Bitcoin Address</strong><br>
+<span id="btcAddr"></span>
+
+<div class="qr">
+<img id="qrImg">
+</div>
+
+<div id="ticketBox">
+<label>Ticket Quantity</label>
+<select id="quantity" onchange="updateTicket()">
+    <option value="1">1</option>
+    <option value="2">2</option>
+    <option value="3">3</option>
+</select>
+</div>
+
+<div id="donationBox">
+<label>Suggested Donations (USD)</label>
+<div class="suggestions">
+<button onclick="setDonation(150)">$150</button>
+<button onclick="setDonation(250)">$250</button>
+<button onclick="setDonation(500)">$500</button>
+<button onclick="setDonation(1200)">$1200</button>
+</div>
+</div>
+
+<label>USD Amount</label>
+<input id="usdAmount" type="number" oninput="convertBTC()">
+
+<label>BTC Amount</label>
+<input id="btcAmount" readonly>
+
+<label>Transaction ID (TXID)</label>
+<input id="txid">
+
+<button class="btn whatsapp" onclick="confirmWhatsApp()">
+✅ Confirm on WhatsApp
+</button>
+
+</div>
+
+<footer>Tayfa Istanbul Presents</footer>
+
+</div>
+
+<script>
+document.getElementById("btcAddr").innerText = BTC_ADDRESS;
+document.getElementById("qrImg").src =
+`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=bitcoin:${BTC_ADDRESS}`;
+</script>
+
+</body>
+</html>
